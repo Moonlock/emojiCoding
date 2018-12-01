@@ -59,11 +59,11 @@ class EmojiCoder:
 		self.errorRight.image = fire
 
 
-	def createButtons(self, frame):		# TODO: Combine start/stop
+	def createButtons(self, frame):
 		buttonFrame = tk.Frame(frame, bg=BG_COLOUR)
 		buttonFrame.pack(side="top", fill="both")
-		buttonFrame.grid_columnconfigure(0, weight=2)
-		buttonFrame.grid_columnconfigure(1, weight=1)
+		buttonFrame.grid_columnconfigure(0, weight=5)
+		buttonFrame.grid_columnconfigure(1, weight=3)
 
 		leftFrame = tk.Frame(buttonFrame, bg=BG_COLOUR)
 		leftFrame.grid(row=0, column=0)
@@ -85,8 +85,10 @@ class EmojiCoder:
 
 		self.createButton([floppy, down], leftFrame, self.save)
 		self.createButton([floppy, up], leftFrame, self.load)
-		self.createButton([run], rightFrame, self.run)
-		self.createButton([stop], rightFrame, self.stop)
+		self.startStopButton = self.createButton([run], rightFrame, self.startStop)
+		self.startStopButton.startImage = run
+		self.startStopButton.stopImage = stop
+		self.startStopButton.isStart = True
 
 	def createButton(self, images, frame, command):
 		button = tk.Frame(frame, bg=BG_COLOUR, padx=5, pady=5,
@@ -101,7 +103,7 @@ class EmojiCoder:
 		button.bind('<ButtonPress-1>', lambda e: self.buttonPress(button))
 		button.bind('<ButtonRelease-1>', lambda e: self.buttonRelease(button, command))
 		
-		return button
+		return icon
 
 	def buttonPress(self, button):
 		button.config(relief="sunken")
@@ -137,6 +139,12 @@ class EmojiCoder:
 					self.inputText.insert(tk.END, char)
 		f.close()
 
+	def startStop(self):
+		if(self.startStopButton.isStart):
+			self.run()
+		else:
+			self.stop()
+
 	def run(self):
 		self.outputText.config(state="normal")
 		self.outputText.delete(1.0, tk.END)
@@ -146,10 +154,16 @@ class EmojiCoder:
 			args=(self.getCode(False), self, self.guiQueue, self.interpreterQueue))
 		thread.start()
 
+		self.startStopButton.config(image=self.startStopButton.stopImage)
+		self.startStopButton.isStart = False
+
 	def stop(self):
 		interpreter.stop()
 		self.returnEmoji(0)
 		self.emojiFrame.pack_forget()
+
+		self.startStopButton.config(image=self.startStopButton.startImage)
+		self.startStopButton.isStart = True
 
 
 	def defineEmoji(self):
@@ -250,7 +264,6 @@ class EmojiCoder:
 	def outputEmoji(self, index):
 		self.outputText.image_create(tk.END, 
 			image = self.frame.emoji[index])
-		# return 'break'
 
 
 	def getCode(self, keepWhitespace=False):
@@ -287,7 +300,8 @@ class EmojiCoder:
 		self.errorRight.delete("all")
 
 	def codeFinished(self):
-		pass
+		self.startStopButton.config(image=self.startStopButton.startImage)
+		self.startStopButton.isStart = True
 
 
 	def checkQueue(self):
