@@ -19,22 +19,23 @@ class EmojiCoder:
 		self.HEIGHT = root.winfo_height()
 		self.WIDTH = root.winfo_width()
 
-		root.protocol("WM_DELETE_WINDOW", lambda: self.onClosing(root))
+		root.protocol("WM_DELETE_WINDOW", self.onClosing)
 
 		self.guiQueue = Queue()
 		self.interpreterQueue = Queue()
-		self.frame = tk.Frame(root, bg=BG_COLOUR)
-		self.frame.pack(side="top", expand=True, fill="both")
+		self.root = root
+		self.root.config(bg=BG_COLOUR)
 
-		self.createTitle(self.frame)
-		self.createButtons(self.frame)
-		self.frame.emoji = self.defineEmoji()
-		self.createTextboxes(self.frame)
+		self.createTitle()
+		self.createButtons()
+		self.root.emoji = self.defineEmoji()
+		self.createTextboxes()
 
 		self.checkQueue()
 
-	def createTitle(self, frame):
-		titleFrame = tk.Frame(frame, pady=20, bg=BG_COLOUR)
+
+	def createTitle(self):
+		titleFrame = tk.Frame(self.root, pady=20, bg=BG_COLOUR)
 		titleFrame.pack(side="top")
 
 		fire = ImageTk.PhotoImage(Image.open("emoji/fire.png"))
@@ -59,8 +60,8 @@ class EmojiCoder:
 		self.errorRight.image = fire
 
 
-	def createButtons(self, frame):
-		buttonFrame = tk.Frame(frame, bg=BG_COLOUR)
+	def createButtons(self):
+		buttonFrame = tk.Frame(self.root, bg=BG_COLOUR)
 		buttonFrame.pack(side="top", fill="both")
 		buttonFrame.grid_columnconfigure(0, weight=5)
 		buttonFrame.grid_columnconfigure(1, weight=3)
@@ -85,6 +86,7 @@ class EmojiCoder:
 
 		self.createButton([floppy, down], leftFrame, self.save)
 		self.createButton([floppy, up], leftFrame, self.load)
+
 		self.startStopButton = self.createButton([run], rightFrame, self.startStop)
 		self.startStopButton.startImage = run
 		self.startStopButton.stopImage = stop
@@ -175,19 +177,19 @@ class EmojiCoder:
 		return emoji
 
 
-	def createTextboxes(self, frame):
-		textFrame = tk.Frame(frame, bg=BG_COLOUR)
+	def createTextboxes(self):
+		textFrame = tk.Frame(self.root, bg=BG_COLOUR)
 		textFrame.pack(side="top", expand=True, padx=10, pady=10, fill="both")
 		textFrame.grid_columnconfigure(0, weight=5)
 		textFrame.grid_columnconfigure(2, weight=3)
 		textFrame.grid_rowconfigure(0, weight=1)
 		textFrame.grid_propagate(False)
 
-		self.inputText = self.createTextbox(textFrame, 0)
+		self.inputText = self.createTextbox(textFrame, 0, True)
 		self.bindKeys(self.inputText)
 
-		self.outputText = self.createTextbox(textFrame, 2)
-		self.outputText.config(state="disabled")
+		self.outputText = self.createTextbox(textFrame, 2, False)
+		self.outputText.config(state="disabled", wrap="char")
 
 		self.outputText.update()
 		self.emojiFrame = tk.Frame(self.inputText, bg=BG_COLOUR, bd=2, relief='ridge',
@@ -199,30 +201,27 @@ class EmojiCoder:
 				self.emojiFrame.grid_columnconfigure(x, weight=1)
 				self.emojiFrame.grid_rowconfigure(y, weight=1)
 				emoji = tk.Label(self.emojiFrame, bg=BG_COLOUR, cursor='arrow',
-					image=self.frame.emoji[emojiNum])
+					image=self.root.emoji[emojiNum])
 				emoji.grid(row=y, column=x)
-				# self.bindEmoji(emoji, emojiNum)
 				emoji.bind('<ButtonPress-1>',
 					lambda e, value=emojiNum: self.returnEmoji(value))
-
-	def bindEmoji(self, emoji, value):
-		emoji.bind('<ButtonPress-1>', lambda e: self.returnEmoji(value))
 
 	def returnEmoji(self, value):
 		self.emojiFrame.pack_forget()
 		self.interpreterQueue.put(value)
 
-	def createTextbox(self, frame, column):
+	def createTextbox(self, frame, column, xScroll):
 		text = tk.Text(frame, wrap="none", bd=3, relief="ridge", width=1,
 			highlightbackground=BG_COLOUR, highlightcolor=BG_COLOUR,
 			bg=TEXT_COLOUR, insertbackground='white')
 		text.grid(row=0, column=column, sticky="nesw", padx=(10,0))
 
-		xScrollbar = tk.Scrollbar(frame, command=text.xview, orient="horizontal",
-			bg=TEXT_COLOUR, activebackground=BG_COLOUR, troughcolor=BG_COLOUR, 
-			bd=0, elementborderwidth=2)
-		xScrollbar.grid(row=1, column=column, sticky='ew', padx=(15,5))
-		text.config(xscrollcommand=xScrollbar.set)
+		if xScroll:
+			xScrollbar = tk.Scrollbar(frame, command=text.xview, orient="horizontal",
+				bg=TEXT_COLOUR, activebackground=BG_COLOUR, troughcolor=BG_COLOUR,
+				bd=0, elementborderwidth=2)
+			xScrollbar.grid(row=1, column=column, sticky='ew', padx=(15,5))
+			text.config(xscrollcommand=xScrollbar.set)
 
 		yScrollbar = tk.Scrollbar(frame, command=text.yview,
 			bg=TEXT_COLOUR, activebackground=BG_COLOUR, troughcolor=BG_COLOUR, 
@@ -254,7 +253,7 @@ class EmojiCoder:
 
 	def inputEmoji(self, index):
 		self.inputText.image_create(tk.INSERT, 
-			image=self.frame.emoji[index], name=COMMANDS[index])
+			image=self.root.emoji[index], name=COMMANDS[index])
 		return 'break'
 
 	def doNothing(self, event):
@@ -265,7 +264,7 @@ class EmojiCoder:
 
 	def outputEmoji(self, index):
 		self.outputText.image_create(tk.END, 
-			image = self.frame.emoji[index])
+			image = self.root.emoji[index])
 
 
 	def getCode(self, keepWhitespace=False):
@@ -310,8 +309,8 @@ class EmojiCoder:
 		while self.guiQueue.qsize():
 			action = self.guiQueue.get(0)
 			action()
-		self.frame.after(200, self.checkQueue)
+		self.root.after(200, self.checkQueue)
 
-	def onClosing(self, root):
+	def onClosing(self):
 		self.stop()
-		root.destroy()
+		self.root.destroy()
