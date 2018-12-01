@@ -2,7 +2,6 @@
 
 from emojiCoder import EmojiCoder
 import tkinter as tk
-from PIL import Image, ImageTk
 
 class EmojiCoding(tk.Tk):
 	

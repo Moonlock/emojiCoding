@@ -201,7 +201,9 @@ class EmojiCoder:
 				emoji = tk.Label(self.emojiFrame, bg=BG_COLOUR, cursor='arrow',
 					image=self.frame.emoji[emojiNum])
 				emoji.grid(row=y, column=x)
-				self.bindEmoji(emoji, emojiNum)
+				# self.bindEmoji(emoji, emojiNum)
+				emoji.bind('<ButtonPress-1>',
+					lambda e, value=emojiNum: self.returnEmoji(value))
 
 	def bindEmoji(self, emoji, value):
 		emoji.bind('<ButtonPress-1>', lambda e: self.returnEmoji(value))

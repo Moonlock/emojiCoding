@@ -45,10 +45,9 @@ def run(code, gui, guiQueue, responseQueue):
 				instPtr = bracketMap[instPtr]
 
 		elif code[instPtr] == '.':
-			guiQueue.put(lambda: gui.outputEmoji(stack[stackPtr]))
+			guiQueue.put(lambda emoji=stack[stackPtr]: gui.outputEmoji(emoji))
 
 		elif code[instPtr] == ',':
-			# stack[stackPtr] = gui.getInput()
 			guiQueue.put(gui.getInput)
 			stack[stackPtr] = responseQueue.get()
 
