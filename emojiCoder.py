@@ -295,6 +295,7 @@ class EmojiCoder:
 		self.errorRight.create_image(ERROR_SIZE/2, ERROR_SIZE/2,
 			image=self.errorRight.image)
 		self.errorLeft.after(2000, self.clearError)
+		self.codeFinished()
 
 	def clearError(self):
 		self.errorLeft.delete("all")
